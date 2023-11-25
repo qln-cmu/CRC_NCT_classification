@@ -62,7 +62,7 @@ class CRC_Dataset(Dataset):
 # Define transforms
 transform = transforms.Compose([
     transforms.ToTensor(),  # Converts image to PyTorch tensor
-    #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Normalizes the tensor
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Normalizes the tensor
 ])
 
 # Load datasets
