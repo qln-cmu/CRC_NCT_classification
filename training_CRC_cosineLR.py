@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+#Jason Nguyen 2023_11_20
+#This script can be used to train the classification model using NCT-CRC-HE-100K dataset
+#The code is set up to use with different variants of efficientnet arch, but can be 
+#modified to train with different model's architecture
 
 import os
 import torch
@@ -18,10 +22,10 @@ import argparse
 parser = argparse.ArgumentParser(description='Train a model on CRC dataset.')
 parser.add_argument('--train_data_dir', default='C:\\Jason\\CRC_NRT_data\\NCT-CRC-HE-100K', type=str, help='Path to training data directory.')
 parser.add_argument('--val_data_dir', default='C:\\Jason\\CRC_NRT_data\\CRC-VAL-HE-7K', type=str, help='Path to validation data directory.')
-parser.add_argument('--model_name', default='efficientnet-b0', type=str, help='Model name for EfficientNet.')
+parser.add_argument('--model_name', type=str, help='Model name for EfficientNet, for example, efficientnet-b0.')
 parser.add_argument('--output_dir', default='C:\\Jason\\CRC_NRT_data\\CRC_EfficientNetb3_lr1e-3_batch128_cosineLR_noImageNet_Norm',
                     type=str, help='Output directory for checkpoints and logs.')
-parser.add_argument('--learning_rate', default=1e-3, type=float, help='Learning rate for training.')
+parser.add_argument('--learning_rate', default=1e-3, type=float, help='Initial learning rate for training.')
 args = parser.parse_args()
 
 # Check CUDA and GPUs
