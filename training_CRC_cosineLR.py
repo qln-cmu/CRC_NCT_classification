@@ -1,5 +1,33 @@
 #!/usr/bin/env python
 
+"""
+Train EfficientNet on CRC Dataset
+
+This script trains an EfficientNet model on the CRC (Colorectal Cancer) dataset. It allows for training on both single
+and multi-GPU setups. The script includes options for data augmentation through image resizing and normalization.
+The trained model is saved along with training logs that include accuracy and loss metrics for both training and
+validation datasets. The script accepts command-line arguments for various parameters like data directory paths,
+model type, learning rate, and output directory for saved models and logs.
+
+Arguments:
+- train_data_dir: Directory containing training data.
+- val_data_dir: Directory containing validation data.
+- model_name: Type of EfficientNet model to be used (default: efficientnet-b0).
+- output_dir: Directory where model checkpoints and logs will be saved.
+- resized_dim: Size to which input images will be resized (default: 224).
+- learning_rate: Learning rate for the optimizer (default: 1e-3).
+
+The script checks for available GPUs and uses CUDA for training if available. Multi-GPU training is supported and automatically detected.
+
+Example usage:
+python training_CRC_cosineLR.py --train_data_dir "path_to_training_data" \
+                                --val_data_dir "path_to_validation_data" \
+                                --model_name "efficientnet-b0" \
+                                --output_dir "path_to_output_directory" \
+                                --resized_dim 224 \
+                                --learning_rate 1e-3
+"""
+
 import os
 import torch
 import torch.nn as nn
