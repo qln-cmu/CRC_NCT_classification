@@ -138,7 +138,7 @@ log_filename = f"{output_dir_name}_train_log_{current_time}.csv"
 log_path = os.path.join(output_dir, log_filename)
 with open(log_path, 'w', newline='') as file:
     writer = csv.writer(file)
-    writer.writerow(['epoch', 'train_acc', 'train_loss', 'val_acc', 'val_loss','cancer_val_acc', 'cancer_val_loss', 'current_lr'])
+    writer.writerow(['epoch', 'train_acc', 'train_loss', 'val_acc', 'val_loss','cancer_val_recall', 'cancer_val_recall', 'current_lr'])
 
 # Training loop with tqdm
 for epoch in range(num_epochs):
