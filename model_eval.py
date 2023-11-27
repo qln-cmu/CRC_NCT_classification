@@ -147,10 +147,10 @@ current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
 csv_filename = os.path.join(args.output_dir, f'model_eval_{current_time}.csv')
 with open(csv_filename, 'w', newline='') as file:
     writer = csv.writer(file)
-    writer.writerow(['checkpoint_filename', 'val_accuracy', 'TUM_accuracy'])
+    writer.writerow(['checkpoint_filename', 'val_accuracy', 'cancer_accuracy'])
 # Initialize variables to track the highest combined accuracy and the corresponding checkpoint
 highest_combined_acc = 0
-highest_tum_accuracy = 0
+highest_cancer_accuracy = 0
 highest_val_accuracy = 0
 best_checkpoint = ''
 
@@ -163,7 +163,9 @@ for checkpoint_path in tqdm(checkpoint_files, desc="Processing Checkpoints"):
     # Reset metrics
     val_corrects = 0
     tum_corrects = 0
-    tum_total = sum([1 for _, label in val_dataset if label == val_dataset.class_to_idx['TUM']])
+    str_corrects = 0
+    cancer_total = sum([1 for _, label in val_dataset if label == val_dataset.class_to_idx['STR']])
+    cancer_total += sum([1 for _, label in val_dataset if label == val_dataset.class_to_idx['TUM']])
 
     # Validation loop
     model.eval()
@@ -174,22 +176,24 @@ for checkpoint_path in tqdm(checkpoint_files, desc="Processing Checkpoints"):
             _, preds = torch.max(outputs, 1)
 
             val_corrects += torch.sum(preds == labels.data).item()
+            str_corrects += torch.sum((preds == labels.data) & (labels == val_dataset.class_to_idx['STR'])).item()
             tum_corrects += torch.sum((preds == labels.data) & (labels == val_dataset.class_to_idx['TUM'])).item()
 
     # Calculate accuracies
     val_accuracy = val_corrects / len(val_dataset)
-    tum_accuracy = tum_corrects / tum_total if tum_total > 0 else 0
-    combined_acc = 0.5 * val_accuracy + 0.5 * tum_accuracy  # Weighted average of the two accuracies
+    cancer_accuracy = (str_corrects + tum_corrects) / cancer_total if cancer_total > 0 else 0
+    combined_acc = 0.5 * val_accuracy + 0.5 * cancer_accuracy  # Weighted average of the two accuracies
 
     # Write to CSV
     with open(csv_filename, 'a', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow([os.path.basename(checkpoint_path), val_accuracy, tum_accuracy])
+        writer.writerow([os.path.basename(checkpoint_path), val_accuracy, cancer_accuracy])
 
     # Check and update best model based on combined accuracy
     if combined_acc > highest_combined_acc:
         highest_combined_acc = combined_acc
-        highest_tum_accuracy = tum_accuracy
+        highest_cancer_accuracy = cancer_accuracy
+        highest_val_accuracy = val_accuracy
         best_checkpoint = checkpoint_path
 
 
@@ -213,17 +217,29 @@ for inputs, labels in val_loader:
 # Metrics calculation
 cm = confusion_matrix(y_true, y_pred)
 report = classification_report(y_true, y_pred, target_names=val_dataset.class_to_idx.keys(), output_dict=True)
-fpr, tpr, _ = roc_curve(y_true, y_pred, pos_label=val_dataset.class_to_idx['TUM'])
-roc_auc = auc(fpr, tpr)
+
+fpr_tum, tpr_tum, thresholds_tum = roc_curve(y_true, y_pred, pos_label=val_dataset.class_to_idx['TUM'])
+roc_auc_tum = auc(fpr_tum, tpr_tum)
+fpr_str, tpr_str, thresholds_str = roc_curve(y_true, y_pred, pos_label=val_dataset.class_to_idx['STR'])
+roc_auc_str = auc(fpr_str, tpr_str)
 
 tum_index = val_dataset.class_to_idx['TUM']
-tn = np.sum(cm) - np.sum(cm[tum_index, :]) - np.sum(cm[:, tum_index]) + cm[tum_index, tum_index]
-fp = np.sum(cm[:, tum_index]) - cm[tum_index, tum_index]
-fn = np.sum(cm[tum_index, :]) - cm[tum_index, tum_index]
-tp = cm[tum_index, tum_index]
+tn_tum = np.sum(cm) - np.sum(cm[tum_index, :]) - np.sum(cm[:, tum_index]) + cm[tum_index, tum_index]
+fp_tum = np.sum(cm[:, tum_index]) - cm[tum_index, tum_index]
+fn_tum = np.sum(cm[tum_index, :]) - cm[tum_index, tum_index]
+tp_tum = cm[tum_index, tum_index]
 
-tum_specificity = tn / (tn + fp) if (tn + fp) > 0 else 0
-tum_sensitivity = tp / (tp + fn) if (tp + fn) > 0 else 0
+tum_specificity = tn_tum / (tn_tum + fp_tum) if (tn_tum + fp_tum) > 0 else 0
+tum_sensitivity = tp_tum / (tp_tum + fn_tum) if (tp_tum + fn_tum) > 0 else 0
+
+str_index = val_dataset.class_to_idx['STR']
+tn_str = np.sum(cm) - np.sum(cm[str_index, :]) - np.sum(cm[:, str_index]) + cm[str_index, str_index]
+fp_str = np.sum(cm[:, str_index]) - cm[str_index, str_index]
+fn_str = np.sum(cm[str_index, :]) - cm[str_index, str_index]
+tp_str = cm[str_index, str_index]
+
+str_specificity = tn_str / (tn_str + fp_str) if (tn_str + fp_str) > 0 else 0
+str_sensitivity = tp_str / (tp_str + fn_str) if (tp_str + fn_str) > 0 else 0
 
 # Confusion matrix for best model
 class_names = list(val_dataset.class_to_idx.keys())
@@ -234,18 +250,22 @@ plt.savefig(os.path.join(args.output_dir, f'{output_dir_name}_confusion_matrix.p
 # Print and save results
 results_str = f"""
 Best model based on combined accuracy is: {best_checkpoint}
-val_accuracy:{val_accuracy}
-tum_accuracy:{tum_accuracy}
+combined_accuracy: {highest_combined_acc}
+val_accuracy:{highest_val_accuracy}
+tum_accuracy:{highest_cancer_accuracy}
 
 Confusion Matrix:
-{cm}
+{cm}`
 
 Classification Report:
 {classification_report(y_true, y_pred, target_names=val_dataset.class_to_idx.keys())}
 
 TUM Class Specificity: {tum_specificity}
 TUM Class Sensitivity: {tum_sensitivity}
-ROC AUC: {roc_auc}
+STR Class Specificity: {str_specificity}
+STR Class Sensitivity: {str_sensitivity}
+ROC AUC TUM: {roc_auc_tum}
+ROC AUC STR: {roc_auc_str}
 """
 
 print(results_str)
@@ -256,11 +276,9 @@ with open(results_filename, 'w') as file:
     file.write(results_str)
 
 # ROC Curve for TUM class
-fpr, tpr, thresholds = roc_curve(y_true, y_pred, pos_label=val_dataset.class_to_idx['TUM'])
-roc_auc = auc(fpr, tpr)
 
 plt.figure()
-plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (AUC = {roc_auc:.2f})')
+plt.plot(fpr_tum, tpr_tum, color='darkorange', lw=2, label=f'ROC curve (AUC = {roc_auc_tum:.2f})')
 plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
@@ -269,4 +287,18 @@ plt.ylabel('True Positive Rate')
 plt.title('ROC Curve for TUM Class')
 plt.legend(loc="lower right")
 plt.savefig(os.path.join(args.output_dir, f'{output_dir_name}_roc_curve_tum.png'))
+#plt.show()
+
+# ROC Curve for STR class
+
+plt.figure()
+plt.plot(fpr_str, tpr_str, color='darkorange', lw=2, label=f'ROC curve (AUC = {roc_auc_str:.2f})')
+plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Curve for STR Class')
+plt.legend(loc="lower right")
+plt.savefig(os.path.join(args.output_dir, f'{output_dir_name}_roc_curve_str.png'))
 #plt.show()
