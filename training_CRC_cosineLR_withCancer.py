@@ -115,7 +115,8 @@ model._fc = nn.Linear(num_ftrs, len(train_dataset.class_to_idx))
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 num_gpus = torch.cuda.device_count()
 print(f"Number of GPUs available: {num_gpus}")
-model = nn.DataParallel(model)
+if num_gpus > 1:
+    model = nn.DataParallel(model)
 model.to(device)
 
 # Training parameters
