@@ -1,8 +1,4 @@
 #!/usr/bin/env python
-#Jason Nguyen 2023_11_20
-#This script can be used to train the classification model using NCT-CRC-HE-100K dataset
-#The code is set up to use with different variants of efficientnet arch, but can be 
-#modified to train with different model's architecture
 
 import os
 import torch
@@ -22,10 +18,11 @@ import argparse
 parser = argparse.ArgumentParser(description='Train a model on CRC dataset.')
 parser.add_argument('--train_data_dir', default='C:\\Jason\\CRC_NRT_data\\NCT-CRC-HE-100K', type=str, help='Path to training data directory.')
 parser.add_argument('--val_data_dir', default='C:\\Jason\\CRC_NRT_data\\CRC-VAL-HE-7K', type=str, help='Path to validation data directory.')
-parser.add_argument('--model_name', type=str, help='Model name for EfficientNet, for example, efficientnet-b0.')
+parser.add_argument('--model_name', default='efficientnet-b0', type=str, help='Model name for EfficientNet.')
 parser.add_argument('--output_dir', default='C:\\Jason\\CRC_NRT_data\\CRC_EfficientNetb3_lr1e-3_batch128_cosineLR_noImageNet_Norm',
                     type=str, help='Output directory for checkpoints and logs.')
-parser.add_argument('--learning_rate', default=1e-3, type=float, help='Initial learning rate for training.')
+parser.add_argument('--resized_dim', default=224, type=int, help='Resize dimension for input images.')
+parser.add_argument('--learning_rate', default=1e-3, type=float, help='Learning rate for training.')
 args = parser.parse_args()
 
 # Check CUDA and GPUs
@@ -59,14 +56,18 @@ class CRC_Dataset(Dataset):
         
         if self.transform:
             image = self.transform(image)
-            
+
+        # Print the shape of the image tensor if you want to confirm
+        #print(f'Shape of image tensor (after resizing): {image.size()}')
+
         return image, label
 
 
 # Define transforms
 transform = transforms.Compose([
-    transforms.ToTensor(),  # Converts image to PyTorch tensor
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Normalizes the tensor
+    transforms.Resize((args.resized_dim, args.resized_dim)),  # Resize the image
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
 # Load datasets
