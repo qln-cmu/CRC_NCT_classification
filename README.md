@@ -57,7 +57,7 @@ To train the model using NCT-CRC-HE-100K dataset, use the example below to run t
 
 ```--learning_rate```: The learning rate for the Adam optimizer.
 
-## Input Data Structure
+### Input Data Structure
 The training and validation data directories should have the following structure (as provided by authors of NCT-CRC-HE-100K dataset (insert citation link here):
   ```bash
   data_directory/
@@ -71,9 +71,40 @@ The training and validation data directories should have the following structure
     ...
   ```
 
-## Training Output
+### Training Output
 The script will save model checkpoints and a training log CSV file in the specified output directory. The CSV file contains epoch-wise training and validation accuracy and loss.
 
 ## Model Evaluation
 
-(to be added)
+To evaluate the trained models using the CRC dataset, follow these steps to run the model_eval.py script from the command line:
+
+### Usage
+```bash
+python model_eval.py --val_data_dir "path/to/validation/data" \
+                     --model_input_dir "path/to/model/checkpoints" \
+                     --model_name "efficientnet-b0" \
+                     --output_dir "path/to/output/directory" \
+                     --resized_dim 224
+
+```
+### Arguments
+```--val_data_dir```: Path to the directory containing validation data.
+
+```--model_input_dir```: Directory containing saved model checkpoints.
+
+```--model_name```: The EfficientNet model used during training (e.g., efficientnet-b0).
+
+```--output_dir```: Directory where evaluation results will be saved.
+
+```--resized_dim```: The dimensions to which the input images will be resized for evaluation (default is 224x224 pixels).
+### Evaluation Output
+The script evaluates all model checkpoints found in --model_input_dir and selects the best model based on a combination of overall validation accuracy and 'TUM' class accuracy. The results include:
+
+A confusion matrix for the best-performing model.
+* Classification report detailing precision, recall, F1-score for each class, and overall accuracy.
+
+* ROC curve and AUC for the 'TUM' class.
+
+* Specificity and sensitivity metrics for the 'TUM' class.
+
+* The output is saved in the user-defined ```--output_dir``` as visual plots (confusion matrix, ROC curve) and textual information (CSV and TXT files).
