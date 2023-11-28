@@ -33,6 +33,7 @@ class ClassifyModel:
         self.checkpoint_val = None
         self.checkpoint_str = None
         self.checkpoint_tum = None
+        # To be changed
         self.val_acc = 0.9568245125348189
         self.str_acc = 0.7648456057007126
         self.tum_acc = 0.9878345498783455
@@ -49,7 +50,7 @@ class ClassifyModel:
 
         # Detect if we have a GPU available
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        
+        # To be changed
         self.checkpoint_val = torch.load("model_result_112_b3_epoch_4_20231127_052702.pth", map_location=device)
         self.checkpoint_str = torch.load("model_result_112_b3_epoch_1_20231127_184058.pth", map_location=device)
         self.checkpoint_tum = torch.load("model_result_112_b3_epoch_4_20231127_185353.pth", map_location=device)
