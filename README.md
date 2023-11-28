@@ -113,3 +113,4 @@ A confusion matrix for the best-performing model.
 ```bash
 pip install spams-bin
 streamlit run app.py
+```
