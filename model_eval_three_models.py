@@ -136,7 +136,7 @@ model._fc = nn.Linear(num_ftrs, len(val_dataset.class_to_idx))
 # Define the device and check for multiple GPUs
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 num_gpus = torch.cuda.device_count()
-if args.resized_dim != 112 and args.model_name != 'efficientnet-b1':
+if args.resized_dim != 112 or args.model_name != 'efficientnet-b1':
     model = nn.DataParallel(model)
 model.to(device)
 
