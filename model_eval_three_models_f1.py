@@ -148,15 +148,19 @@ current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
 csv_filename = os.path.join(args.output_dir, f'model_eval_{current_time}.csv')
 with open(csv_filename, 'w', newline='') as file:
     writer = csv.writer(file)
-    writer.writerow(['checkpoint_filename', 'val_accuracy', 'cancer_accuracy'])
+    writer.writerow(['checkpoint_filename', "str_recall", "str_prec", "str_f1", "str_f1w", "tum_recall", "tum_prec", "tum_f1", "tum_f1w"])
 # Initialize variables to track the highest combined accuracy and the corresponding checkpoint
 # highest_combined_acc = 0
-highest_str_accuracy = 0
-highest_tum_accuracy = 0
+highest_str_f1 = 0
+highest_tum_f1 = 0
+highest_str_f1w = 0
+highest_tum_f1w = 0
 highest_val_accuracy = 0
 best_checkpoint_val = ''
 best_checkpoint_str = ''
 best_checkpoint_tum = ''
+best_checkpoint_strw = ''
+best_checkpoint_tumw= ''
 
 # Evaluate each model checkpoint
 for checkpoint_path in tqdm(checkpoint_files, desc="Processing Checkpoints"):
@@ -168,6 +172,8 @@ for checkpoint_path in tqdm(checkpoint_files, desc="Processing Checkpoints"):
     val_corrects = 0
     tum_corrects = 0
     str_corrects = 0
+    tum_all = 0
+    str_all = 0
     str_total = sum([1 for _, label in val_dataset if label == val_dataset.class_to_idx['STR']])
     tum_total = sum([1 for _, label in val_dataset if label == val_dataset.class_to_idx['TUM']])
 
@@ -182,28 +188,47 @@ for checkpoint_path in tqdm(checkpoint_files, desc="Processing Checkpoints"):
             val_corrects += torch.sum(preds == labels.data).item()
             str_corrects += torch.sum((preds == labels.data) & (labels == val_dataset.class_to_idx['STR'])).item()
             tum_corrects += torch.sum((preds == labels.data) & (labels == val_dataset.class_to_idx['TUM'])).item()
+            str_all += torch.sum(preds == val_dataset.class_to_idx['STR']).item()
+            tum_all += torch.sum(preds == val_dataset.class_to_idx['TUM']).item()
+            
 
     # Calculate accuracies
     val_accuracy = val_corrects / len(val_dataset)
-    str_accuracy = str_corrects / str_total if str_total > 0 else 0
-    tum_accuracy = tum_corrects / tum_total if tum_total > 0 else 0
+    str_recall = str_corrects / str_total if str_total > 0 else 0
+    tum_recall = tum_corrects / tum_total if tum_total > 0 else 0
+    str_prec = str_corrects / str_all if str_all > 0 else 0
+    tum_prec = tum_corrects / tum_all if tum_all > 0 else 0
+    str_f1 = 2 * str_prec*str_recall / (str_prec + str_recall)
+    tum_f1 = 2 * tum_prec*tum_recall / (tum_prec + tum_recall)
+    
+    alpha = 1.2
+    str_f1w = (1 + alpha**2) * str_prec*str_recall / (alpha**2*str_prec + str_recall)
+    tum_f1w = (1 + alpha**2) * tum_prec*tum_recall / (alpha**2*tum_prec + tum_recall)
+    
+    
     
 
     # Write to CSV
     with open(csv_filename, 'a', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow([os.path.basename(checkpoint_path), val_accuracy, str_accuracy, tum_accuracy])
+        writer.writerow([os.path.basename(checkpoint_path), val_accuracy, str_recall, str_prec, str_f1, str_f1w, tum_recall, tum_prec, tum_f1, tum_f1w])
 
     # Check and update best model based on combined accuracy
     if val_accuracy > highest_val_accuracy:
         highest_val_accuracy = val_accuracy
         best_checkpoint_val = checkpoint_path
-    if str_accuracy > highest_str_accuracy:
-        highest_str_accuracy = str_accuracy
+    if str_f1 > highest_str_f1:
+        highest_str_f1 = str_f1
         best_checkpoint_str = checkpoint_path
-    if tum_accuracy > highest_tum_accuracy:
-        highest_tum_accuracy = tum_accuracy
+    if tum_f1 > highest_tum_f1:
+        highest_tum_f1 = tum_f1
         best_checkpoint_tum = checkpoint_path
+    if str_f1w > highest_str_f1w:
+        highest_str_f1w = str_f1w
+        best_checkpoint_strw = checkpoint_path
+    if tum_f1w > highest_tum_f1w:
+        highest_tum_f1w = tum_f1w
+        best_checkpoint_tumw = checkpoint_path
 
 
 # Overall best model
@@ -256,6 +281,7 @@ plt.figure()
 plot_confusion_matrix(cm_val, class_names)
 plt.savefig(os.path.join(args.output_dir, f'{output_dir_name}_val_confusion_matrix.png'))
 #plt.show()
+plt.close()
 
 # Best STR model
 # Load the best model for final evaluation
@@ -307,6 +333,7 @@ plt.figure()
 plot_confusion_matrix(cm_str, class_names)
 plt.savefig(os.path.join(args.output_dir, f'{output_dir_name}_str_confusion_matrix.png'))
 #plt.show()
+plt.close()
 
 # Best TUM model
 # Load the best model for final evaluation
@@ -358,6 +385,112 @@ plt.figure()
 plot_confusion_matrix(cm_tum, class_names)
 plt.savefig(os.path.join(args.output_dir, f'{output_dir_name}_tum_confusion_matrix.png'))
 #plt.show()
+plt.close()
+
+
+# Best Weighted STR model
+# Load the best model for final evaluation
+model.load_state_dict(torch.load(best_checkpoint_strw, map_location=device))
+model.eval()
+
+# Reinitialize y_true and y_pred for evaluation of best model
+y_true_strw, y_pred_strw = [], []
+
+# Evaluation loop for best model
+for inputs, labels in val_loader:
+    inputs, labels = inputs.to(device), labels.to(device)
+    with torch.no_grad():
+        outputs = model(inputs)
+        _, preds = torch.max(outputs, 1)
+        y_true_strw.extend(labels.cpu().numpy())
+        y_pred_strw.extend(preds.cpu().numpy())
+
+# Metrics calculation
+cm_strw = confusion_matrix(y_true_strw, y_pred_strw)
+report_strw = classification_report(y_true_strw, y_pred_strw, target_names=val_dataset.class_to_idx.keys(), output_dict=True)
+
+fpr_tum_strw, tpr_tum_strw, thresholds_tum_strw = roc_curve(y_true_strw, y_pred_strw, pos_label=val_dataset.class_to_idx['TUM'])
+roc_auc_tum_strw = auc(fpr_tum_strw, tpr_tum_strw)
+fpr_str_strw, tpr_str_strw, thresholds_strw = roc_curve(y_true_strw, y_pred_strw, pos_label=val_dataset.class_to_idx['STR'])
+roc_auc_str_strw = auc(fpr_str_strw, tpr_str_strw)
+
+tum_index = val_dataset.class_to_idx['TUM']
+tn_tumw = np.sum(cm_strw) - np.sum(cm_strw[tum_index, :]) - np.sum(cm_strw[:, tum_index]) + cm_strw[tum_index, tum_index]
+fp_tumw = np.sum(cm_strw[:, tum_index]) - cm_strw[tum_index, tum_index]
+fn_tumw = np.sum(cm_strw[tum_index, :]) - cm_strw[tum_index, tum_index]
+tp_tumw = cm_strw[tum_index, tum_index]
+
+tum_specificity_strw = tn_tumw / (tn_tumw + fp_tumw) if (tn_tumw + fp_tumw) > 0 else 0
+tum_sensitivity_strw = tp_tumw / (tp_tumw + fn_tumw) if (tp_tumw + fn_tumw) > 0 else 0
+
+str_index = val_dataset.class_to_idx['STR']
+tn_strw = np.sum(cm_strw) - np.sum(cm_strw[str_index, :]) - np.sum(cm_strw[:, str_index]) + cm_strw[str_index, str_index]
+fp_strw = np.sum(cm_strw[:, str_index]) - cm_strw[str_index, str_index]
+fn_strw = np.sum(cm_strw[str_index, :]) - cm_strw[str_index, str_index]
+tp_strw = cm_strw[str_index, str_index]
+
+str_specificity_strw = tn_strw / (tn_strw + fp_strw) if (tn_strw + fp_strw) > 0 else 0
+str_sensitivity_strw = tp_strw / (tp_strw + fn_strw) if (tp_strw + fn_strw) > 0 else 0
+
+# Confusion matrix for best model
+class_names = list(val_dataset.class_to_idx.keys())
+plt.figure()
+plot_confusion_matrix(cm_strw, class_names)
+plt.savefig(os.path.join(args.output_dir, f'{output_dir_name}_weighted_str_confusion_matrix.png'))
+#plt.show()
+plt.close()
+
+# Best Weighted TUM model
+# Load the best model for final evaluation
+model.load_state_dict(torch.load(best_checkpoint_tumw, map_location=device))
+model.eval()
+
+# Reinitialize y_true and y_pred for evaluation of best model
+y_true_tumw, y_pred_tumw = [], []
+
+# Evaluation loop for best model
+for inputs, labels in val_loader:
+    inputs, labels = inputs.to(device), labels.to(device)
+    with torch.no_grad():
+        outputs = model(inputs)
+        _, preds = torch.max(outputs, 1)
+        y_true_tumw.extend(labels.cpu().numpy())
+        y_pred_tumw.extend(preds.cpu().numpy())
+
+# Metrics calculation
+cm_tumw = confusion_matrix(y_true_tumw, y_pred_tumw)
+report_tumw = classification_report(y_true_tumw, y_pred_tumw, target_names=val_dataset.class_to_idx.keys(), output_dict=True)
+
+fpr_tum_tumw, tpr_tum_tumw, thresholds_tum_tumw = roc_curve(y_true_tumw, y_pred_tumw, pos_label=val_dataset.class_to_idx['TUM'])
+roc_auc_tum_tumw = auc(fpr_tum_tumw, tpr_tum_tumw)
+fpr_str_tumw, tpr_str_tumw, thresholds_str_tumw = roc_curve(y_true_tumw, y_pred_tumw, pos_label=val_dataset.class_to_idx['STR'])
+roc_auc_str_tumw = auc(fpr_str_tumw, tpr_str_tumw)
+
+tum_index = val_dataset.class_to_idx['TUM']
+tn_tumw = np.sum(cm_tumw) - np.sum(cm_tumw[tum_index, :]) - np.sum(cm_tumw[:, tum_index]) + cm_tumw[tum_index, tum_index]
+fp_tumw = np.sum(cm_tumw[:, tum_index]) - cm_tumw[tum_index, tum_index]
+fn_tumw = np.sum(cm_tumw[tum_index, :]) - cm_tumw[tum_index, tum_index]
+tp_tumw = cm_tumw[tum_index, tum_index]
+
+tum_specificity_tumw = tn_tumw / (tn_tumw + fp_tumw) if (tn_tumw + fp_tumw) > 0 else 0
+tum_sensitivity_tumw = tp_tumw / (tp_tumw + fn_tumw) if (tp_tumw + fn_tumw) > 0 else 0
+
+str_index = val_dataset.class_to_idx['STR']
+tn_strw = np.sum(cm_tumw) - np.sum(cm_tumw[str_index, :]) - np.sum(cm_tumw[:, str_index]) + cm_tumw[str_index, str_index]
+fp_strw = np.sum(cm_tumw[:, str_index]) - cm_tumw[str_index, str_index]
+fn_strw = np.sum(cm_tumw[str_index, :]) - cm_tumw[str_index, str_index]
+tp_strw = cm_tumw[str_index, str_index]
+
+str_specificity_tumw = tn_strw / (tn_strw + fp_strw) if (tn_strw + fp_strw) > 0 else 0
+str_sensitivity_tumw = tp_strw / (tp_strw + fn_strw) if (tp_strw + fn_strw) > 0 else 0
+
+# Confusion matrix for best model
+class_names = list(val_dataset.class_to_idx.keys())
+plt.figure()
+plot_confusion_matrix(cm_tumw, class_names)
+plt.savefig(os.path.join(args.output_dir, f'{output_dir_name}_weighted_tum_confusion_matrix.png'))
+#plt.show()
+plt.close()
 
 # Print and save results
 results_str = f"""
@@ -377,8 +510,8 @@ STR Class Sensitivity: {str_sensitivity}
 ROC AUC TUM: {roc_auc_tum}
 ROC AUC STR: {roc_auc_str}
 
-Best model based on STR accuracy is: {best_checkpoint_str}
-str_accuracy:{highest_str_accuracy}
+Best model based on STR F1-score is: {best_checkpoint_str}
+str_f1:{highest_str_f1}
 
 Confusion Matrix:
 {cm_str}`
@@ -394,8 +527,8 @@ ROC AUC TUM: {roc_auc_tum_str}
 ROC AUC STR: {roc_auc_str_str}
 
 
-Best model based on TUM accuracy is: {best_checkpoint_tum}
-tum_accuracy:{highest_tum_accuracy}
+Best model based on TUM F1-score is: {best_checkpoint_tum}
+tum_f1:{highest_tum_f1}
 
 Confusion Matrix:
 {cm_tum}`
@@ -409,6 +542,39 @@ STR Class Specificity: {str_specificity_tum}
 STR Class Sensitivity: {str_sensitivity_tum}
 ROC AUC TUM: {roc_auc_tum_tum}
 ROC AUC STR: {roc_auc_str_tum}
+
+Best model based on STR Weighted F1-score is: {best_checkpoint_strw}
+str_f1:{highest_str_f1w}
+
+Confusion Matrix:
+{cm_strw}`
+
+Classification Report:
+{classification_report(y_true_strw, y_pred_strw, target_names=val_dataset.class_to_idx.keys())}
+
+TUM Class Specificity: {tum_specificity_strw}
+TUM Class Sensitivity: {tum_sensitivity_strw}
+STR Class Specificity: {str_specificity_strw}
+STR Class Sensitivity: {str_sensitivity_strw}
+ROC AUC TUM: {roc_auc_tum_strw}
+ROC AUC STR: {roc_auc_str_strw}
+
+
+Best model based on TUM Weighted F1-score is: {best_checkpoint_tumw}
+tum_f1:{highest_tum_f1w}
+
+Confusion Matrix:
+{cm_tumw}`
+
+Classification Report:
+{classification_report(y_true_tumw, y_pred_tumw, target_names=val_dataset.class_to_idx.keys())}
+
+TUM Class Specificity: {tum_specificity_tumw}
+TUM Class Sensitivity: {tum_sensitivity_tumw}
+STR Class Specificity: {str_specificity_tumw}
+STR Class Sensitivity: {str_sensitivity_tumw}
+ROC AUC TUM: {roc_auc_tum_tumw}
+ROC AUC STR: {roc_auc_str_tumw}
 """
 
 print(results_str)
@@ -445,3 +611,32 @@ plt.title('ROC Curve for STR Class')
 plt.legend(loc="lower right")
 plt.savefig(os.path.join(args.output_dir, f'{output_dir_name}_roc_curve_str.png'))
 #plt.show()
+
+# ROC Curve for Weighted TUM class
+
+plt.figure()
+plt.plot(fpr_tum, tpr_tum, color='darkorange', lw=2, label=f'ROC curve (AUC = {roc_auc_tum_tumw:.2f})')
+plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Curve for Weighted TUM Class')
+plt.legend(loc="lower right")
+plt.savefig(os.path.join(args.output_dir, f'{output_dir_name}_roc_curve_tum_weighted.png'))
+#plt.show()
+
+# ROC Curve for Weighted STR class
+
+plt.figure()
+plt.plot(fpr_str, tpr_str, color='darkorange', lw=2, label=f'ROC curve (AUC = {roc_auc_str_strw:.2f})')
+plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Curve for Weighted STR Class')
+plt.legend(loc="lower right")
+plt.savefig(os.path.join(args.output_dir, f'{output_dir_name}_roc_curve_str_weighted.png'))
+#plt.show()
+
