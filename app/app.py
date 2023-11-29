@@ -36,10 +36,10 @@ class ClassifyModel:
         self.checkpoint_tum = None
         self.val_acc = 0.9638
         self.val_prec = 0.94
-        self.str_recall = 0.8242
-        self.tum_recall = 0.9984
-        self.str_prec = 0.82
-        self.tum_prec = 0.84
+        self.str_recall = 0.783847981
+        self.tum_recall = 0.98540146
+        self.str_prec = 0.948275862
+        self.tum_prec = 0.983805668
         
 
     def load(self):
@@ -54,24 +54,17 @@ class ClassifyModel:
         # Detect if we have a GPU available
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         
-        self.checkpoint_val = torch.load("model_result_112_b1_epoch_11_20231126_225903.pth", map_location=device)
-        self.checkpoint_str = torch.load("model_result_56_b4_epoch_5_20231127_033430.pth", map_location=device)
-        self.checkpoint_tum = torch.load("model_result_112_b2_epoch_6_20231127_043043.pth", map_location=device)
+        self.checkpoint_val = torch.load("CRC_EfficientNetb1_lr1e-3_batch128_cosineLR_input_112px_epoch_11_20231126_225903.pth", map_location=device)
+        self.checkpoint_str = torch.load("CRC_EfficientNetb0_lr1e-3_batch128_cosineLR_input_112px_epoch_10_20231126_213451.pth", map_location=device)
+        self.checkpoint_tum = torch.load("CRC_EfficientNetb5_lr1e-3_batch128_cosineLR_input_112px_epoch_14_20231128_103957.pth", map_location=device)
         
          
 
     def predict(self, imgs):
         # Initialize the model for multi-GPU if available
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        
-        transform_str = transforms.Compose([
-            transforms.Resize((56, 56)),  # Resize the image
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ])
 
         inputs = self.transform(imgs).unsqueeze(0)
-        inputs_str = transform_str(imgs).unsqueeze(0)
         inputs = inputs.to(device)
         
         model_val = EfficientNet.from_pretrained('efficientnet-b1')
@@ -85,7 +78,7 @@ class ClassifyModel:
             outputs = model_val(inputs)
             _, preds_val = torch.max(outputs, 1)
         
-        model_tum = EfficientNet.from_pretrained('efficientnet-b2')
+        model_tum = EfficientNet.from_pretrained('efficientnet-b5')
         num_ftrs = model_tum._fc.in_features
         model_tum._fc = nn.Linear(num_ftrs, 9)
         model_tum = nn.DataParallel(model_tum)
@@ -96,7 +89,7 @@ class ClassifyModel:
             outputs_tum = model_tum(inputs)
             _, preds_tum = torch.max(outputs_tum, 1)
         
-        model_str = EfficientNet.from_pretrained('efficientnet-b4')
+        model_str = EfficientNet.from_pretrained('efficientnet-b0')
         num_ftrs = model_str._fc.in_features
         model_str._fc = nn.Linear(num_ftrs, 9)
         model_str = nn.DataParallel(model_str)
@@ -104,7 +97,7 @@ class ClassifyModel:
         model_str.load_state_dict(self.checkpoint_str)
         model_str.eval()
         with torch.no_grad():
-            outputs_str = model_str(inputs_str)
+            outputs_str = model_str(inputs)
             _, preds_str = torch.max(outputs_str, 1)
         
         if preds_tum[0] == 8:
