@@ -148,7 +148,7 @@ current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
 csv_filename = os.path.join(args.output_dir, f'model_eval_{current_time}.csv')
 with open(csv_filename, 'w', newline='') as file:
     writer = csv.writer(file)
-    writer.writerow(['checkpoint_filename', "str_recall", "str_prec", "str_f1", "str_f1w", "tum_recall", "tum_prec", "tum_f1", "tum_f1w"])
+    writer.writerow(['checkpoint_filename', "val_accuracy", "str_recall", "str_prec", "str_f1", "str_f1w", "tum_recall", "tum_prec", "tum_f1", "tum_f1w"])
 # Initialize variables to track the highest combined accuracy and the corresponding checkpoint
 # highest_combined_acc = 0
 highest_str_f1 = 0
