@@ -114,3 +114,4 @@ A confusion matrix for the best-performing model.
 pip install spams-bin
 streamlit run app.py
 ```
+![](webapp_demo.gif)
