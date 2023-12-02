@@ -13,9 +13,11 @@ This repository contains the code for training a Convolutional Neural Network (C
 
 ## Training and Validation DataSet
 Training Set NCT-CRC-HE-100K:
-This is a set of 100,000 non-overlapping image patches from hematoxylin & eosin (H&E) stained histological images of human colorectal cancer (CRC) and normal tissue. All images are 224x224 pixels (px) at 0.5 microns per pixel (MPP). All images are color-normalized using Macenko's method
+This is a set of 100,000 non-overlapping image patches from hematoxylin & eosin (H&E) stained histological images of human colorectal cancer (CRC) and normal tissue. All images are 224x224 pixels (px) at 0.5 microns per pixel (MPP). All images are color-normalized using Macenko's method.
+
 Validation Set CRC-VAL-HE-7K:
 This is a set of 7180 image patches from N=50 patients with colorectal adenocarcinoma (no overlap with patients in NCT-CRC-HE-100K).
+
 See https://zenodo.org/records/1214456 for further details and ethics statement.
 
 ## Requirements (needs to verify this later)
