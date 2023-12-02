@@ -23,9 +23,9 @@ torch==2.0.1+cu118
 torchvision==0.15.2+cu118
 tqdm==4.66.1
 ```
-Hardware:
+Hardware: NVIDIA GPUs recommended (for re-training)
 
-Local workstations:
+Local workstation specs (as tested):
 - 2x NVIDIA RTX A6000
 - 1x NVIDIA RTX 3080 Ti
 
