@@ -11,6 +11,13 @@ Group Members:
 
 This repository contains the code for training a Convolutional Neural Network (CNN) on the CRC (Colorectal Cancer) dataset using the EfficientNet architecture. The training script employs cosine learning rate scheduling and supports training on multiple GPUs.
 
+## Training DataSet and Validation DataSet
+Training Set NCT-CRC-HE-100K:
+This is a set of 100,000 non-overlapping image patches from hematoxylin & eosin (H&E) stained histological images of human colorectal cancer (CRC) and normal tissue. All images are 224x224 pixels (px) at 0.5 microns per pixel (MPP). All images are color-normalized using Macenko's method
+Validation Set CRC-VAL-HE-7K:
+This is a set of 7180 image patches from N=50 patients with colorectal adenocarcinoma (no overlap with patients in NCT-CRC-HE-100K).
+See https://zenodo.org/records/1214456 for further details and ethics statement.
+
 ## Requirements (needs to verify this later)
 
 Packages and dependencies as tested:
@@ -123,6 +130,6 @@ The script evaluates all model checkpoints found in --model_input_dir and select
 pip install spams-bin
 streamlit run app.py
 ```
-We implemented the Macenko Method writen by https://github.com/wanghao14/Stain_Normalization. We created the Web App by using Streamlit: https://streamlit.io/.
+We implemented the Macenko Method for prenormalizing the data writen by https://github.com/wanghao14/Stain_Normalization. We created the Web App by using Streamlit: https://streamlit.io/.
 Due to file size limitation on github, here is the link to the pre-trained best checkpoints: https://drive.google.com/drive/folders/11lm2bOeSbNEINklbFIINnWya2lrbNZ9_?usp=sharing
 ![](webapp_demo.gif)
