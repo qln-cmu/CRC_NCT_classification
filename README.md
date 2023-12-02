@@ -1,10 +1,9 @@
-# path_mnist_2023_erdos
-Biomedical Image Classification group project - Erdos Institute Bootcamp 2023  
+# Biomedical Image Classification group project - Erdos Institute Bootcamp 2023  
 Group Members:  
-Boyang Wu  
-Jason Nguyen  
-Shahinde Dogruer  
-Shashwata Moitra  
+- Boyang Wu  
+- Jason Nguyen  
+- Shahinde Dogruer  
+- Shashwata Moitra  
 
 
 
