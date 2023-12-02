@@ -26,8 +26,8 @@ tqdm==4.66.1
 Hardware:
 
 Local workstations:
-2x NVIDIA RTX A6000
-1x NVIDIA RTX 3080 Ti
+- 2x NVIDIA RTX A6000
+- 1x NVIDIA RTX 3080 Ti
 
 ## Installation
 
