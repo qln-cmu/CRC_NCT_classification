@@ -13,20 +13,29 @@ This repository contains the code for training a Convolutional Neural Network (C
 
 ## Requirements (needs to verify this later)
 
-- Python 3.x
-- PyTorch (version 2.0.1 or later)
-- torchvision
-- efficientnet_pytorch
-- PIL (Pillow)
-- tqdm
+Packages and dependencies as tested:
+```
+efficientnet-pytorch==0.7.1
+matplotlib==3.8.0
+numpy==1.26.0
+Pillow==10.0.1
+torch==2.0.1+cu118
+torchvision==0.15.2+cu118
+tqdm==4.66.1
+```
+Hardware:
+
+Local workstations:
+2x NVIDIA RTX A6000
+1x NVIDIA RTX 3080 Ti
 
 ## Installation
 
 1. Clone this repository to your local machine.
-2. Install the required Python packages. It's recommended to use a virtual environment:
+2. Install the required Python packages from the ```requirements.txt```. It's recommended to use a virtual environment:
 
    ```bash
-   pip install torch torchvision efficientnet_pytorch Pillow tqdm
+   pip install -r requirements.txt
    ```
 ## Usage
 
