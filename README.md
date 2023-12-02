@@ -40,7 +40,7 @@ Local workstation specs (as tested):
 
 ## Installation
 
-1. Clone this repository to your local machine.
+1. Clone this repository to your local directory.
 2. Install the required Python packages from the ```requirements.txt```. It's recommended to use a virtual environment:
 
    ```bash
