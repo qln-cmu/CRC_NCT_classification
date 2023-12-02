@@ -108,7 +108,8 @@ python model_eval.py --val_data_dir "path/to/validation/data" \
 ### Evaluation Output
 The script evaluates all model checkpoints found in --model_input_dir and selects the best model based on the overall validation accuracy, 'STR' and 'TUM' class F1 scores and Fbeta scores (beta=1.2). The results include:
 
-A confusion matrix for the best-performing models.
+* A confusion matrix for the best-performing models.
+  
 * Classification report detailing precision, recall, F1-score for each class, and overall accuracy/F1 score/Fbeta score.
 
 * ROC curve and AUC for the 'STR' and 'TUM' classes.
