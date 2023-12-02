@@ -11,7 +11,7 @@ Group Members:
 
 This repository contains the code for training a Convolutional Neural Network (CNN) on the CRC (Colorectal Cancer) dataset using the EfficientNet architecture. The training script employs cosine learning rate scheduling and supports training on multiple GPUs.
 
-## Training DataSet and Validation DataSet
+## Training and Validation DataSet
 Training Set NCT-CRC-HE-100K:
 This is a set of 100,000 non-overlapping image patches from hematoxylin & eosin (H&E) stained histological images of human colorectal cancer (CRC) and normal tissue. All images are 224x224 pixels (px) at 0.5 microns per pixel (MPP). All images are color-normalized using Macenko's method
 Validation Set CRC-VAL-HE-7K:
