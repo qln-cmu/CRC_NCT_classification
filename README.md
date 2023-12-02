@@ -123,5 +123,6 @@ The script evaluates all model checkpoints found in --model_input_dir and select
 pip install spams-bin
 streamlit run app.py
 ```
+We implemented the Macenko Method writen by https://github.com/wanghao14/Stain_Normalization. We created the Web App by using Streamlit: https://streamlit.io/.
 Due to file size limitation on github, here is the link to the pre-trained best checkpoints: https://drive.google.com/drive/folders/11lm2bOeSbNEINklbFIINnWya2lrbNZ9_?usp=sharing
 ![](webapp_demo.gif)
