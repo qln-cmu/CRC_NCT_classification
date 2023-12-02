@@ -117,7 +117,7 @@ A confusion matrix for the best-performing model.
 
 * The output is saved in the user-defined ```--output_dir``` as visual plots (confusion matrix, ROC curve) and textual information (CSV and TXT files).
 
-## Web Application
+## Web Application for Demo
 ```bash
 pip install spams-bin
 streamlit run app.py
