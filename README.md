@@ -20,7 +20,7 @@ This is a set of 7180 image patches from N=50 patients with colorectal adenocarc
 
 See https://zenodo.org/records/1214456 for further details and ethics statement.
 
-## Requirements (needs to verify this later)
+## Requirements
 
 Packages and dependencies as tested:
 ```
