@@ -106,14 +106,14 @@ python model_eval.py --val_data_dir "path/to/validation/data" \
 
 ```--resized_dim```: The dimensions to which the input images will be resized for evaluation (default is 224x224 pixels).
 ### Evaluation Output
-The script evaluates all model checkpoints found in --model_input_dir and selects the best model based on a combination of overall validation accuracy and 'TUM' class accuracy. The results include:
+The script evaluates all model checkpoints found in --model_input_dir and selects the best model based on the overall validation accuracy, 'STR' and 'TUM' class F1 scores and Fbeta scores (beta=1.2). The results include:
 
-A confusion matrix for the best-performing model.
-* Classification report detailing precision, recall, F1-score for each class, and overall accuracy.
+A confusion matrix for the best-performing models.
+* Classification report detailing precision, recall, F1-score for each class, and overall accuracy/F1 score/Fbeta score.
 
-* ROC curve and AUC for the 'TUM' class.
+* ROC curve and AUC for the 'STR' and 'TUM' classes.
 
-* Specificity and sensitivity metrics for the 'TUM' class.
+* Specificity and sensitivity metrics for the 'STR' and 'TUM' classes.
 
 * The output is saved in the user-defined ```--output_dir``` as visual plots (confusion matrix, ROC curve) and textual information (CSV and TXT files).
 
