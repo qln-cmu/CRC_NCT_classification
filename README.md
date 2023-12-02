@@ -122,4 +122,5 @@ A confusion matrix for the best-performing model.
 pip install spams-bin
 streamlit run app.py
 ```
+Due to file size limitation on github, here is the link to the pre-trained best checkpoints: https://drive.google.com/drive/folders/11lm2bOeSbNEINklbFIINnWya2lrbNZ9_?usp=sharing
 ![](webapp_demo.gif)
